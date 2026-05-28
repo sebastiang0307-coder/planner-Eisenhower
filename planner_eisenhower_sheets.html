@@ -1,0 +1,597 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Planner Eisenhower + Sheets</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css"/>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Instrument Sans',sans-serif;background:#F7F4EF;color:#1A1714;padding:1.25rem 1.25rem 3rem;font-size:14px}
+h1{font-family:'DM Serif Display',serif;font-size:1.6rem;font-weight:400;letter-spacing:-0.02em;line-height:1.1;margin-bottom:4px}
+h1 em{font-style:italic;color:#C4523A}
+.week{font-family:'DM Mono',monospace;font-size:11px;color:#6B6560;background:#EDE9E2;padding:3px 10px;border-radius:20px;display:inline-flex;align-items:center;gap:5px;margin-bottom:1.1rem}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border-radius:8px;font-family:'Instrument Sans',sans-serif;font-size:13px;font-weight:500;cursor:pointer;border:1px solid rgba(26,23,20,.12);background:#fff;color:#1A1714;transition:all .15s;white-space:nowrap;text-decoration:none}
+.btn:hover{background:#F0EDE6}.btn:active{transform:scale(.98)}.btn:disabled{opacity:.5;cursor:not-allowed}
+.btn-primary{background:#1A1714;color:#fff;border-color:#1A1714}.btn-primary:hover{background:#333}
+.btn-ai{background:#EEF3FD;color:#1A3872;border-color:#A8BCE8}.btn-ai:hover{background:#dce8fb}
+.btn-project{background:#F0FAF3;color:#085041;border-color:#A8D8B4}.btn-project:hover{background:#ddf5e5}
+.btn-sheets{background:#E8F5E9;color:#1B5E20;border-color:#81C784}.btn-sheets:hover{background:#C8E6C9}
+.btn-sm{padding:5px 10px;font-size:12px}
+.btn i{font-size:14px}
+
+.sheets-bar{display:flex;align-items:center;gap:10px;padding:9px 14px;border-radius:10px;border:1px solid rgba(26,23,20,.1);background:#fff;margin-bottom:1rem;flex-wrap:wrap}
+.sheets-status{display:flex;align-items:center;gap:6px;font-size:12px;flex:1}
+.sheets-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;transition:background .3s}
+.sheets-dot.ok{background:#2E8B57}.sheets-dot.err{background:#C4523A}.sheets-dot.idle{background:#A09A94}
+.sheets-actions{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.sync-info{font-size:11px;color:#A09A94;font-family:'DM Mono',monospace}
+
+.add-box{background:#fff;border:1px solid rgba(26,23,20,.1);border-radius:12px;padding:14px;margin-bottom:1rem}
+.add-box-label{font-size:10.5px;font-weight:600;letter-spacing:.07em;color:#A09A94;text-transform:uppercase;margin-bottom:8px;display:block}
+.add-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px}
+.add-row input,.add-row select,.sel-q{font-family:'Instrument Sans',sans-serif;font-size:13px;padding:8px 11px;border-radius:8px;border:1px solid rgba(26,23,20,.12);background:#F7F4EF;color:#1A1714;outline:none;transition:border-color .15s}
+.add-row input{flex:1;min-width:180px}.add-row input:focus{border-color:#3A6BC4}
+.add-actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.type-picker{display:flex;gap:10px;margin-bottom:1rem}
+.type-card{flex:1;border-radius:12px;border:1.5px solid rgba(26,23,20,.1);padding:12px;cursor:pointer;transition:all .18s;background:#fff;text-align:center}
+.type-card:hover{transform:translateY(-1px);box-shadow:0 4px 16px rgba(0,0,0,.07)}
+.type-card.sel-task{border-color:#3A6BC4;background:#EEF3FD}
+.type-card.sel-project{border-color:#2E8B57;background:#F0FAF3}
+.type-card-icon{font-size:20px;margin-bottom:5px}
+.type-card-icon.task{color:#3A6BC4}.type-card-icon.project{color:#2E8B57}
+.type-card strong{display:block;font-size:13px;font-weight:600;margin-bottom:2px}
+.type-card span{font-size:11px;color:#6B6560}
+
+.overlay{display:none;position:fixed;inset:0;background:rgba(26,23,20,.5);z-index:200;align-items:center;justify-content:center;padding:1rem}
+.overlay.open{display:flex}
+.modal{background:#fff;border-radius:16px;width:100%;max-width:500px;max-height:90vh;overflow-y:auto;box-shadow:0 12px 48px rgba(0,0,0,.2)}
+.modal-head{padding:16px 18px 12px;border-bottom:1px solid rgba(26,23,20,.07);position:sticky;top:0;background:#fff;z-index:1}
+.modal-head-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.modal-title{font-family:'DM Serif Display',serif;font-size:1.05rem;font-weight:400}
+.modal-title em{font-style:italic;color:#3A6BC4}
+.modal-title em.green{color:#2E8B57}
+.close-btn{background:none;border:none;cursor:pointer;color:#A09A94;font-size:18px;padding:2px;border-radius:6px}
+.close-btn:hover{color:#C4523A}
+.prog-bar{height:3px;background:#F0EDE6;border-radius:3px;overflow:hidden}
+.prog-fill{height:100%;background:#3A6BC4;border-radius:3px;transition:width .3s}
+.prog-fill.green{background:#2E8B57}
+.prog-lbl{font-size:10px;color:#A09A94;font-family:'DM Mono',monospace;margin-top:4px}
+.modal-body{padding:18px}
+.q-lbl{font-size:14px;font-weight:600;color:#1A1714;margin-bottom:3px;line-height:1.4}
+.q-sub{font-size:12px;color:#6B6560;margin-bottom:13px;line-height:1.4}
+.opts{display:flex;flex-direction:column;gap:7px}
+.opt{display:flex;align-items:center;gap:11px;padding:10px 13px;border-radius:10px;cursor:pointer;border:1.5px solid rgba(26,23,20,.09);background:#F7F4EF;transition:all .15s}
+.opt:hover{border-color:#A8BCE8;background:#eef3fd}.opt.sel{border-color:#3A6BC4;background:#dce8fb}
+.opt-icon{width:30px;height:30px;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:15px;color:#fff}
+.opt-body strong{font-size:13px;display:block;color:#1A1714}.opt-body span{font-size:11.5px;color:#6B6560}
+.dl-opts{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px}
+.dl-opt{padding:5px 12px;border-radius:20px;font-size:12px;cursor:pointer;border:1px solid rgba(26,23,20,.12);background:#F7F4EF;color:#1A1714;transition:all .15s}
+.dl-opt:hover{border-color:#A8BCE8}.dl-opt.sel{border-color:#3A6BC4;background:#3A6BC4;color:#fff}
+.dl-custom{font-size:12px;padding:5px 10px;border-radius:8px;border:1px solid rgba(26,23,20,.12);background:#F7F4EF;color:#1A1714;font-family:'DM Mono',monospace;outline:none;margin-top:6px;width:100%}
+.dl-custom:focus{border-color:#3A6BC4}
+.res-row{display:flex;gap:6px;margin-bottom:8px}
+.res-input{flex:1;font-family:'Instrument Sans',sans-serif;font-size:12.5px;padding:7px 10px;border-radius:8px;border:1px solid rgba(26,23,20,.12);background:#F7F4EF;color:#1A1714;outline:none}
+.res-input:focus{border-color:#3A6BC4}
+.res-add-btn{padding:7px 11px;border-radius:8px;border:1px solid rgba(26,23,20,.12);background:#fff;cursor:pointer;font-size:13px;color:#1A1714}
+.res-add-btn:hover{background:#F0EDE6}
+.tags{display:flex;flex-wrap:wrap;gap:5px;margin-top:4px}
+.tag{display:flex;align-items:center;gap:4px;font-size:11.5px;padding:3px 9px;border-radius:20px}
+.tag-res{background:#EDE9E2;color:#6B6560}.tag-link{background:#EEF3FD;color:#1A3872}
+.tag button{background:none;border:none;cursor:pointer;font-size:10px;padding:0;line-height:1;color:inherit;opacity:.7}
+.tag button:hover{opacity:1}
+.step-actions{display:flex;gap:8px;margin-top:16px}
+.result-card{border-radius:12px;padding:14px;margin-bottom:12px;text-align:center}
+.result-name{font-family:'DM Serif Display',serif;font-size:1.2rem;font-weight:400;margin-bottom:3px}
+.result-desc{font-size:12px;opacity:.8;line-height:1.4}
+.result-why{font-size:12.5px;color:#6B6560;line-height:1.6;background:#F7F4EF;border-radius:8px;padding:10px 12px;border-left:3px solid #A09A94;margin-bottom:12px}
+.result-why strong{display:block;font-size:11px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:#A09A94;margin-bottom:4px}
+.result-pills{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:12px}
+.r-pill{font-size:11px;padding:3px 10px;border-radius:20px;background:#EDE9E2;color:#6B6560;display:flex;align-items:center;gap:4px}
+.ai-sug-box{border-radius:10px;border:1px solid #A8BCE8;background:#EEF3FD;padding:14px;margin-bottom:14px}
+.ai-sug-title{font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:#1A3872;margin-bottom:10px;display:flex;align-items:center;gap:6px}
+.sug-section{margin-bottom:10px}.sug-section:last-child{margin-bottom:0}
+.sug-section-title{font-size:11px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:#1A3872;margin-bottom:5px;display:flex;align-items:center;gap:5px}
+.sug-content{font-size:12.5px;color:#1A1714;line-height:1.6;background:#fff;border-radius:8px;padding:9px 11px;border:1px solid rgba(58,107,196,.15);white-space:pre-wrap}
+@keyframes spin{to{transform:rotate(360deg)}}
+.spinning{animation:spin .8s linear infinite;display:inline-block}
+.ai-loading{font-size:12.5px;color:#3A6BC4;display:flex;align-items:center;gap:8px}
+.proj-field{margin-bottom:14px}
+.proj-label{font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:#A09A94;margin-bottom:6px;display:block}
+.proj-input{width:100%;font-family:'Instrument Sans',sans-serif;font-size:13px;padding:9px 12px;border-radius:8px;border:1px solid rgba(26,23,20,.12);background:#F7F4EF;color:#1A1714;outline:none}
+.proj-input:focus{border-color:#2E8B57}
+.proj-textarea{width:100%;font-family:'Instrument Sans',sans-serif;font-size:13px;padding:9px 12px;border-radius:8px;border:1px solid rgba(26,23,20,.12);background:#F7F4EF;color:#1A1714;outline:none;resize:vertical;min-height:70px;line-height:1.5}
+.proj-textarea:focus{border-color:#2E8B57}
+.breakdown-header{background:#F0FAF3;border-radius:10px;padding:12px 14px;margin-bottom:12px;border:1px solid #A8D8B4}
+.breakdown-header strong{font-size:13px;color:#085041;display:block;margin-bottom:2px}
+.breakdown-header span{font-size:11.5px;color:#2E8B57}
+.proj-task-item{display:flex;align-items:flex-start;gap:10px;padding:10px 12px;border-radius:10px;border:1px solid rgba(26,23,20,.09);background:#fff;margin-bottom:7px}
+.proj-task-num{width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;color:#fff;flex-shrink:0;margin-top:1px}
+.proj-task-body{flex:1;min-width:0}
+.proj-task-text{font-size:13px;font-weight:500;color:#1A1714;margin-bottom:4px}
+.proj-task-meta{display:flex;gap:5px;flex-wrap:wrap;align-items:center}
+.proj-task-badge{font-size:10.5px;padding:2px 8px;border-radius:20px;font-weight:500}
+.proj-task-check{display:flex;align-items:center;gap:4px;margin-left:auto;flex-shrink:0}
+.proj-task-check input{cursor:pointer;width:15px;height:15px}
+.proj-task-check label{font-size:11px;color:#6B6560;cursor:pointer}
+.detail-section{margin-bottom:14px}
+.detail-section-title{font-size:10.5px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:#A09A94;margin-bottom:7px;display:flex;align-items:center;gap:5px}
+.detail-section-title i{font-size:13px}
+.q-badge{display:inline-flex;align-items:center;gap:5px;font-size:12px;padding:4px 12px;border-radius:20px;font-weight:500}
+.link-item{display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:8px;background:#F7F4EF;border:1px solid rgba(26,23,20,.08);margin-bottom:5px;font-size:12.5px}
+.link-item a{color:#3A6BC4;text-decoration:none;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.link-item a:hover{text-decoration:underline}
+.link-item button{background:none;border:none;cursor:pointer;color:#A09A94;font-size:12px;padding:0 2px}
+.link-item button:hover{color:#C4523A}
+.add-link-row{display:flex;gap:6px;margin-top:6px;flex-wrap:wrap}
+.add-link-row input{flex:1;min-width:140px;font-family:'Instrument Sans',sans-serif;font-size:12.5px;padding:6px 10px;border-radius:8px;border:1px solid rgba(26,23,20,.12);background:#F7F4EF;color:#1A1714;outline:none}
+.add-link-row input:focus{border-color:#3A6BC4}
+.sug-reload{display:flex;align-items:center;gap:5px;font-size:11.5px;color:#3A6BC4;cursor:pointer;background:none;border:none;padding:0;font-family:'Instrument Sans',sans-serif;margin-left:auto}
+.sug-reload:hover{text-decoration:underline}
+.legend{display:flex;gap:12px;margin-bottom:.65rem;flex-wrap:wrap}
+.leg{display:flex;align-items:center;gap:5px;font-size:11px;color:#6B6560}
+.leg-dot{width:7px;height:7px;border-radius:50%}
+.leg-stripe{width:14px;height:3px;border-radius:2px}
+.axis-x{text-align:center;font-family:'DM Mono',monospace;font-size:10px;color:#A09A94;letter-spacing:.05em;margin-bottom:4px}
+.axis-wrap{display:flex;gap:8px;align-items:flex-start}
+.axis-y{writing-mode:vertical-rl;transform:rotate(180deg);font-family:'DM Mono',monospace;font-size:10px;color:#A09A94;letter-spacing:.05em;padding:4px 0;align-self:stretch;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;flex:1}
+.quadrant{border-radius:12px;border:1px solid rgba(26,23,20,.09);background:#fff;display:flex;flex-direction:column;overflow:hidden}
+.q-head{padding:9px 12px;display:flex;align-items:center;gap:8px;border-bottom:1px solid rgba(26,23,20,.06)}
+.q-icon{width:26px;height:26px;border-radius:7px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:13px;color:#fff}
+.q-hl strong{font-size:12.5px;font-weight:600;display:block}.q-hl span{font-size:10px;color:#A09A94}
+.q-count{margin-left:auto;font-family:'DM Mono',monospace;font-size:10.5px;color:#A09A94}
+.q1 .q-head{background:#FDF1EE}.q1 .q-icon{background:#C4523A}.q1 .q-hl strong{color:#7A2218}
+.q2 .q-head{background:#EEF3FD}.q2 .q-icon{background:#3A6BC4}.q2 .q-hl strong{color:#1A3872}
+.q3 .q-head{background:#FDF8EE}.q3 .q-icon{background:#C48A1A}.q3 .q-hl strong{color:#7A5210}
+.q4 .q-head{background:#F2F2F0}.q4 .q-icon{background:#888078}.q4 .q-hl strong{color:#444038}
+.q-body{padding:8px;flex:1;min-height:90px}
+.item{display:flex;align-items:flex-start;gap:7px;padding:7px 8px;border-radius:8px;border:1px solid rgba(26,23,20,.07);margin-bottom:5px;background:#F7F4EF;transition:opacity .2s;cursor:pointer}
+.item:hover{border-color:rgba(26,23,20,.18)}
+.item.done{opacity:.32}.item.done .item-text{text-decoration:line-through}
+.item.is-proj{border-left:3px solid #2E8B57}
+.item-check{width:15px;height:15px;border-radius:50%;border:1.5px solid rgba(26,23,20,.2);cursor:pointer;flex-shrink:0;margin-top:1px;display:flex;align-items:center;justify-content:center;transition:all .15s;background:#fff}
+.item-check:hover{border-color:#2E8B57}.item-check.checked{background:#2E8B57;border-color:#2E8B57}
+.item-check i{font-size:8px;color:#fff;display:none}.item-check.checked i{display:block}
+.item-body{flex:1;min-width:0}
+.item-text{font-size:12px;color:#1A1714;line-height:1.35}
+.item-meta{display:flex;gap:4px;margin-top:3px;flex-wrap:wrap}
+.badge{font-size:10px;padding:1px 7px;border-radius:20px;font-weight:500}
+.b-s{background:#EEEDFE;color:#3C3489}.b-r{background:#E1F5EE;color:#085041}
+.b-dl{background:#FDF8EE;color:#7A5210;font-family:'DM Mono',monospace}
+.b-link{background:#EEF3FD;color:#1A3872}.b-proj{background:#F0FAF3;color:#085041}
+.item-del{font-size:11px;color:#A09A94;cursor:pointer;background:none;border:none;padding:1px 3px;opacity:0;flex-shrink:0;border-radius:4px;transition:opacity .15s}
+.item:hover .item-del{opacity:1}.item-del:hover{color:#C4523A}
+.empty-q{font-size:11.5px;color:#A09A94;padding:14px 8px;text-align:center;font-style:italic}
+.toast{position:fixed;bottom:1.5rem;right:1.5rem;padding:10px 16px;border-radius:10px;font-size:12.5px;font-weight:500;color:#fff;z-index:999;opacity:0;transition:opacity .3s;pointer-events:none;display:flex;align-items:center;gap:7px;box-shadow:0 4px 20px rgba(0,0,0,.15)}
+.toast.show{opacity:1}
+.toast.ok{background:#2E8B57}.toast.err{background:#C4523A}.toast.info{background:#3A6BC4}
+</style>
+</head>
+<body>
+
+<h1>Planner <em>semanal</em></h1>
+<div class="week"><i class="ti ti-calendar" style="font-size:11px"></i><span id="week-label"></span></div>
+
+<div class="sheets-bar">
+  <div class="sheets-status">
+    <div class="sheets-dot idle" id="sheets-dot"></div>
+    <span id="sheets-status-text">Verificando conexión con Google Sheets...</span>
+  </div>
+  <div class="sheets-actions">
+    <span class="sync-info" id="sync-info"></span>
+    <button class="btn btn-sheets btn-sm" onclick="syncAll()"><i class="ti ti-refresh"></i> Sincronizar todo</button>
+    <a href="https://docs.google.com/spreadsheets" target="_blank" rel="noopener" class="btn btn-sm"><i class="ti ti-external-link"></i> Abrir Sheet</a>
+  </div>
+</div>
+
+<div class="add-box">
+  <span class="add-box-label">¿Qué vas a agregar?</span>
+  <div class="type-picker">
+    <div class="type-card sel-task" id="type-task" onclick="selectType('task')">
+      <div class="type-card-icon task"><i class="ti ti-checkbox"></i></div>
+      <strong>Tarea simple</strong>
+      <span>Una acción con clasificador inteligente</span>
+    </div>
+    <div class="type-card" id="type-project" onclick="selectType('project')">
+      <div class="type-card-icon project"><i class="ti ti-layout-grid"></i></div>
+      <strong>Proyecto</strong>
+      <span>Objetivo grande → tareas con fechas</span>
+    </div>
+  </div>
+  <div id="task-inputs">
+    <div class="add-row">
+      <input type="text" id="new-task" placeholder="¿Qué hay que hacer?" />
+      <select id="new-work"><option value="Sombra">Sombra</option><option value="Raincatcher">Raincatcher</option></select>
+    </div>
+    <div class="add-actions">
+      <button class="btn btn-ai" id="btn-classify"><i class="ti ti-wand"></i> Clasificar con IA</button>
+      <span style="font-size:12px;color:#A09A94">o directo en</span>
+      <select class="sel-q" id="manual-q"><option value="q1">Q1</option><option value="q2">Q2</option><option value="q3">Q3</option><option value="q4">Q4</option></select>
+      <button class="btn btn-primary" id="btn-add-manual"><i class="ti ti-plus"></i> Agregar</button>
+    </div>
+  </div>
+  <div id="project-inputs" style="display:none">
+    <div class="add-row">
+      <input type="text" id="new-proj-name" placeholder="Nombre del proyecto u objetivo..." style="flex:1"/>
+      <select id="new-proj-work"><option value="Sombra">Sombra</option><option value="Raincatcher">Raincatcher</option></select>
+    </div>
+    <div class="add-actions">
+      <button class="btn btn-project" id="btn-open-project"><i class="ti ti-sparkles"></i> Descomponer con IA</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="clf-overlay">
+  <div class="modal">
+    <div class="modal-head">
+      <div class="modal-head-row"><div class="modal-title">Clasificar: <em id="clf-task-name"></em></div><button class="close-btn" onclick="closeClassifier()"><i class="ti ti-x"></i></button></div>
+      <div class="prog-bar"><div class="prog-fill" id="clf-prog"></div></div>
+      <div class="prog-lbl" id="clf-prog-lbl">Pregunta 1 de 5</div>
+    </div>
+    <div class="modal-body" id="clf-body"></div>
+  </div>
+</div>
+
+<div class="overlay" id="proj-overlay">
+  <div class="modal">
+    <div class="modal-head">
+      <div class="modal-head-row"><div class="modal-title">Proyecto: <em class="green" id="proj-modal-name"></em></div><button class="close-btn" onclick="closeProject()"><i class="ti ti-x"></i></button></div>
+      <div class="prog-bar"><div class="prog-fill green" id="proj-prog" style="width:0%"></div></div>
+      <div class="prog-lbl" id="proj-prog-lbl">Paso 1 de 3</div>
+    </div>
+    <div class="modal-body" id="proj-body"></div>
+  </div>
+</div>
+
+<div class="overlay" id="det-overlay">
+  <div class="modal">
+    <div class="modal-head"><div class="modal-head-row"><div class="modal-title">Ficha de tarea</div><button class="close-btn" onclick="closeDetail()"><i class="ti ti-x"></i></button></div></div>
+    <div class="modal-body" id="det-body"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<div class="legend">
+  <div class="leg"><div class="leg-dot" style="background:#3C3489"></div>Sombra</div>
+  <div class="leg"><div class="leg-dot" style="background:#085041"></div>Raincatcher</div>
+  <div class="leg"><div class="leg-dot" style="background:#C48A1A"></div>Con deadline</div>
+  <div class="leg"><div class="leg-stripe" style="background:#2E8B57"></div>Proyecto</div>
+</div>
+
+<div class="axis-x">← URGENCIA →</div>
+<div class="axis-wrap">
+  <div class="axis-y">← IMPORTANCIA →</div>
+  <div class="grid">
+    <div class="quadrant q1"><div class="q-head"><div class="q-icon"><i class="ti ti-flame"></i></div><div class="q-hl"><strong>Q1 — Hacer ya</strong><span>Urgente + Importante</span></div><span class="q-count" id="c-q1">0/0</span></div><div class="q-body" id="b-q1"></div></div>
+    <div class="quadrant q2"><div class="q-head"><div class="q-icon"><i class="ti ti-target"></i></div><div class="q-hl"><strong>Q2 — Planear</strong><span>No urgente + Importante</span></div><span class="q-count" id="c-q2">0/0</span></div><div class="q-body" id="b-q2"></div></div>
+    <div class="quadrant q3"><div class="q-head"><div class="q-icon"><i class="ti ti-bell"></i></div><div class="q-hl"><strong>Q3 — Delegar</strong><span>Urgente + No importante</span></div><span class="q-count" id="c-q3">0/0</span></div><div class="q-body" id="b-q3"></div></div>
+    <div class="quadrant q4"><div class="q-head"><div class="q-icon"><i class="ti ti-trash"></i></div><div class="q-hl"><strong>Q4 — Eliminar</strong><span>Ni urgente ni importante</span></div><span class="q-count" id="c-q4">0/0</span></div><div class="q-body" id="b-q4"></div></div>
+  </div>
+</div>
+
+<script>
+const SHEETS_URL='https://script.google.com/macros/s/AKfycbzvHMXIjSH0dfrR-mtmsYrZnw5KuRffLamHXaEgksFI_APK_QDBAJxuvhIqdAAv7G0CBQ/exec';
+
+let items=[
+  {id:1,text:'Responder correos urgentes',work:'Sombra',q:'q1',deadline:'Hoy',resources:[],links:[],suggestions:null,project:null,done:false},
+  {id:2,text:'Revisar propuesta cliente A',work:'Raincatcher',q:'q1',deadline:'Mañana',resources:[],links:[],suggestions:null,project:null,done:false},
+  {id:3,text:'Preparar informe semanal',work:'Sombra',q:'q2',deadline:'Jueves',resources:[],links:[],suggestions:null,project:null,done:false},
+  {id:4,text:'Planear sprint próximo',work:'Raincatcher',q:'q2',deadline:'',resources:[],links:[],suggestions:null,project:null,done:false},
+];
+let nextId=10;
+let clfAnswers={},clfStep=0,clfResources=[],clfLinks=[],clfDeadline='';
+let detailId=null;
+let projStep=0,projData={},projBreakdown=null,projSelected=[];
+
+const QDEFS={
+  q1:{label:'Q1 — Hacer ya',desc:'Urgente e importante.',color:'#C4523A',bg:'#FDF1EE',icon:'ti ti-flame'},
+  q2:{label:'Q2 — Planear',desc:'Importante, no urgente.',color:'#3A6BC4',bg:'#EEF3FD',icon:'ti ti-target'},
+  q3:{label:'Q3 — Delegar',desc:'Urgente, no importante.',color:'#C48A1A',bg:'#FDF8EE',icon:'ti ti-bell'},
+  q4:{label:'Q4 — Eliminar',desc:'Ni urgente ni importante.',color:'#888078',bg:'#F2F2F0',icon:'ti ti-trash'},
+};
+const QCOLORS={q1:'#C4523A',q2:'#3A6BC4',q3:'#C48A1A',q4:'#888078'};
+
+const QUESTIONS=[
+  {id:'urgencia',label:'¿Qué tan urgente es?',sub:'Pensá en las consecuencias si no la hacés hoy.',type:'single',opts:[
+    {label:'Crítica — consecuencias graves hoy',sub:'Perdería cliente o incumpliría compromiso serio',val:3,icon:'ti ti-bolt',color:'#C4523A'},
+    {label:'Deadline en 2–3 días',sub:'Fecha límite pronto pero no hoy',val:2,icon:'ti ti-clock',color:'#C48A1A'},
+    {label:'Puede esperar a la próxima semana',sub:'Sin presión inmediata',val:1,icon:'ti ti-calendar',color:'#3A6BC4'},
+    {label:'Sin presión de tiempo',sub:'La haré cuando pueda',val:0,icon:'ti ti-leaf',color:'#2E8B57'},
+  ]},
+  {id:'importancia',label:'¿Qué tan importante para tus objetivos?',sub:'¿Qué impacto real tiene en tus resultados?',type:'single',opts:[
+    {label:'Mueve directamente mis objetivos clave',sub:'Parte de lo que me miden',val:3,icon:'ti ti-star',color:'#C4523A'},
+    {label:'Importante pero no es mi core',sub:'Ayuda pero no es lo principal',val:2,icon:'ti ti-thumb-up',color:'#C48A1A'},
+    {label:'Operativo o de soporte',sub:'Hay que hacerlo pero no mueve la aguja',val:1,icon:'ti ti-settings',color:'#3A6BC4'},
+    {label:'Podría no hacerlo sin impacto',sub:'Nadie lo notaría',val:0,icon:'ti ti-minus',color:'#888078'},
+  ]},
+  {id:'dependencias',label:'¿Alguien está esperando esta tarea?',sub:'¿Hay personas o procesos bloqueados?',type:'single',opts:[
+    {label:'Sí, alguien está parado esperando',sub:'Colega, cliente o proceso depende de mí ahora',val:2,icon:'ti ti-users',color:'#C4523A'},
+    {label:'Habrá dependencia pronto',sub:'En unos días alguien lo va a necesitar',val:1,icon:'ti ti-user-exclamation',color:'#C48A1A'},
+    {label:'No, puedo hacerlo a mi ritmo',sub:'Nadie está esperando',val:0,icon:'ti ti-user-check',color:'#2E8B57'},
+  ]},
+  {id:'deadline',label:'¿Tiene deadline concreto?',sub:'Ayuda a planear bloques de tiempo.',type:'deadline'},
+  {id:'recursos',label:'Recursos, links y adjuntos',sub:'Todo lo que necesitás para ejecutar esta tarea.',type:'resources'},
+];
+
+function weekLabel(){const now=new Date(),mon=new Date(now);mon.setDate(now.getDate()-((now.getDay()+6)%7));mon.setHours(0,0,0,0);const fri=new Date(mon);fri.setDate(mon.getDate()+4);const f=d=>d.toLocaleDateString('es-CO',{day:'numeric',month:'short'});return f(mon)+' — '+f(fri);}
+function selectType(t){document.getElementById('type-task').className='type-card'+(t==='task'?' sel-task':'');document.getElementById('type-project').className='type-card'+(t==='project'?' sel-project':'');document.getElementById('task-inputs').style.display=t==='task'?'block':'none';document.getElementById('project-inputs').style.display=t==='project'?'block':'none';}
+
+function setSheetsDot(s){document.getElementById('sheets-dot').className='sheets-dot '+s;}
+function setSheetsStatus(m){document.getElementById('sheets-status-text').textContent=m;}
+function setSyncInfo(m){document.getElementById('sync-info').textContent=m;}
+
+async function sheetsPost(payload){
+  setSheetsDot('idle');
+  try{
+    const resp=await fetch(SHEETS_URL,{method:'POST',body:JSON.stringify(payload)});
+    const data=await resp.json();
+    if(data.ok){setSheetsDot('ok');setSyncInfo('Sync '+new Date().toLocaleTimeString('es-CO',{hour:'2-digit',minute:'2-digit'}));}
+    else{setSheetsDot('err');setSyncInfo('Error');}
+    return data;
+  }catch(e){setSheetsDot('err');setSyncInfo('Sin conexión');return{ok:false};}
+}
+
+async function syncAll(){toast('Sincronizando...','info');const res=await sheetsPost({action:'sync_all',items});if(res.ok)toast(res.synced+' tareas sincronizadas','ok');else toast('Error al sincronizar','err');}
+
+function toast(msg,type='ok'){const t=document.getElementById('toast');const icon=type==='ok'?'ti-circle-check':type==='err'?'ti-alert-circle':'ti-refresh';t.innerHTML=`<i class="ti ${icon}"></i>${msg}`;t.className='toast show '+type;setTimeout(()=>t.classList.remove('show'),3000);}
+
+function render(){
+  document.getElementById('week-label').textContent=weekLabel();
+  ['q1','q2','q3','q4'].forEach(q=>{
+    const qi=items.filter(i=>i.q===q);
+    document.getElementById('c-'+q).textContent=qi.filter(i=>!i.done).length+'/'+qi.length;
+    const body=document.getElementById('b-'+q);
+    if(!qi.length){body.innerHTML='<div class="empty-q">Sin tareas</div>';return;}
+    body.innerHTML=qi.map(it=>`<div class="item ${it.done?'done':''} ${it.project?'is-proj':''}" onclick="openDetail(${it.id})">
+      <div class="item-check ${it.done?'checked':''}" onclick="event.stopPropagation();toggle(${it.id})"><i class="ti ti-check"></i></div>
+      <div class="item-body"><div class="item-text">${it.text}</div>
+      <div class="item-meta">
+        <span class="badge ${it.work==='Sombra'?'b-s':'b-r'}">${it.work}</span>
+        ${it.project?`<span class="badge b-proj"><i class="ti ti-layout-grid" style="font-size:9px"></i> ${it.project}</span>`:''}
+        ${it.deadline?`<span class="badge b-dl"><i class="ti ti-clock" style="font-size:9px"></i> ${it.deadline}</span>`:''}
+        ${it.links&&it.links.length?`<span class="badge b-link"><i class="ti ti-link" style="font-size:9px"></i> ${it.links.length}</span>`:''}
+      </div></div>
+      <button class="item-del" onclick="event.stopPropagation();del(${it.id})"><i class="ti ti-x"></i></button>
+    </div>`).join('');
+  });
+}
+
+async function toggle(id){const it=items.find(i=>i.id===id);if(!it)return;it.done=!it.done;render();const res=await sheetsPost({action:'update_task',id,done:it.done});toast(it.done?'Completada en Sheet':'Reabierta en Sheet',res.ok?'ok':'err');}
+async function del(id){items=items.filter(i=>i.id!==id);render();if(detailId===id)closeDetail();const res=await sheetsPost({action:'delete_task',id});toast(res.ok?'Eliminada del Sheet':'Error al eliminar',res.ok?'ok':'err');}
+
+function openClassifier(){const text=document.getElementById('new-task').value.trim();if(!text){document.getElementById('new-task').focus();return;}clfAnswers={};clfStep=0;clfResources=[];clfLinks=[];clfDeadline='';document.getElementById('clf-task-name').textContent=text.length>36?text.slice(0,36)+'…':text;document.getElementById('clf-overlay').classList.add('open');renderClfStep();}
+function closeClassifier(){document.getElementById('clf-overlay').classList.remove('open');}
+
+function renderClfStep(){
+  const q=QUESTIONS[clfStep];
+  const pct=Math.round((clfStep/QUESTIONS.length)*100);
+  document.getElementById('clf-prog').style.width=pct+'%';
+  document.getElementById('clf-prog-lbl').textContent=`Pregunta ${clfStep+1} de ${QUESTIONS.length}`;
+  let html=`<div class="q-lbl">${q.label}</div><div class="q-sub">${q.sub}</div>`;
+  if(q.type==='single'){html+=`<div class="opts">${q.opts.map(o=>`<div class="opt" onclick="clfPickOpt('${q.id}',${o.val},this)"><div class="opt-icon" style="background:${o.color}"><i class="${o.icon}"></i></div><div class="opt-body"><strong>${o.label}</strong><span>${o.sub}</span></div></div>`).join('')}</div>`;}
+  if(q.type==='deadline'){html+=`<div class="dl-opts">${['Hoy','Mañana','Esta semana','Próxima semana','Sin deadline'].map(d=>`<div class="dl-opt" onclick="clfPickDl('${d}',this)">${d}</div>`).join('')}</div><input type="date" class="dl-custom" id="clf-dl-date" onchange="clfPickDlDate(this.value)"/><div class="step-actions"><button class="btn btn-primary" onclick="clfNext()"><i class="ti ti-arrow-right"></i> Siguiente</button><button class="btn" onclick="clfNext()">Omitir</button></div>`;}
+  if(q.type==='resources'){html+=`<div style="margin-bottom:12px"><div style="font-size:11.5px;color:#6B6560;margin-bottom:6px;font-weight:500">Recursos necesarios</div><div class="res-row"><input type="text" class="res-input" id="clf-res-inp" placeholder="Aprobación, acceso a Drive..." onkeydown="if(event.key==='Enter')clfAddRes()"/><button class="res-add-btn" onclick="clfAddRes()"><i class="ti ti-plus"></i></button></div><div class="tags" id="clf-res-tags"></div></div><div><div style="font-size:11.5px;color:#6B6560;margin-bottom:6px;font-weight:500">Links o adjuntos</div><div class="res-row"><input type="text" class="res-input" id="clf-link-inp" placeholder="https://... o nombre del doc" onkeydown="if(event.key==='Enter')clfAddLink()"/><button class="res-add-btn" onclick="clfAddLink()"><i class="ti ti-plus"></i></button></div><div class="tags" id="clf-link-tags"></div></div><div class="step-actions"><button class="btn btn-primary" onclick="showClfResult()"><i class="ti ti-sparkles"></i> Ver resultado</button><button class="btn" onclick="showClfResult()">Omitir y ver resultado</button></div>`;setTimeout(()=>{renderClfResTags();renderClfLinkTags();},10);}
+  document.getElementById('clf-body').innerHTML=html;
+}
+
+function clfPickOpt(qId,val,el){document.querySelectorAll('#clf-overlay .opt').forEach(o=>o.classList.remove('sel'));el.classList.add('sel');clfAnswers[qId]=val;setTimeout(()=>{clfStep++;clfStep<QUESTIONS.length?renderClfStep():showClfResult();},260);}
+function clfPickDl(val,el){document.querySelectorAll('.dl-opt').forEach(o=>o.classList.remove('sel'));el.classList.add('sel');clfDeadline=val==='Sin deadline'?'':val;}
+function clfPickDlDate(val){if(!val)return;document.querySelectorAll('.dl-opt').forEach(o=>o.classList.remove('sel'));const d=new Date(val+'T00:00:00');clfDeadline=d.toLocaleDateString('es-CO',{day:'numeric',month:'short'});}
+function clfNext(){clfStep++;clfStep<QUESTIONS.length?renderClfStep():showClfResult();}
+function clfAddRes(){const i=document.getElementById('clf-res-inp');if(!i||!i.value.trim())return;clfResources.push(i.value.trim());i.value='';renderClfResTags();}
+function clfAddLink(){const i=document.getElementById('clf-link-inp');if(!i||!i.value.trim())return;clfLinks.push(i.value.trim());i.value='';renderClfLinkTags();}
+function clfRemRes(i){clfResources.splice(i,1);renderClfResTags();}
+function clfRemLink(i){clfLinks.splice(i,1);renderClfLinkTags();}
+function renderClfResTags(){const t=document.getElementById('clf-res-tags');if(t)t.innerHTML=clfResources.map((r,i)=>`<span class="tag tag-res">${r}<button onclick="clfRemRes(${i})"><i class="ti ti-x"></i></button></span>`).join('');}
+function renderClfLinkTags(){const t=document.getElementById('clf-link-tags');if(t)t.innerHTML=clfLinks.map((l,i)=>`<span class="tag tag-link"><i class="ti ti-link" style="font-size:10px"></i>${l.length>26?l.slice(0,26)+'…':l}<button onclick="clfRemLink(${i})"><i class="ti ti-x"></i></button></span>`).join('');}
+
+function clfScore(){const u=clfAnswers.urgencia||0,imp=clfAnswers.importancia||0,dep=clfAnswers.dependencias||0;const urg=(u+(dep>=2?1:0))>=2;const important=imp>=2;return urg&&important?'q1':!urg&&important?'q2':urg&&!important?'q3':'q4';}
+
+async function showClfResult(){
+  const q=clfScore(),def=QDEFS[q];
+  const task=document.getElementById('new-task').value.trim();
+  const work=document.getElementById('new-work').value;
+  const whyParts=[];
+  const urgOpt=QUESTIONS[0].opts.find(o=>o.val===clfAnswers.urgencia);
+  const impOpt=QUESTIONS[1].opts.find(o=>o.val===clfAnswers.importancia);
+  if(urgOpt)whyParts.push(urgOpt.label.toLowerCase());
+  if(impOpt)whyParts.push(impOpt.label.toLowerCase());
+  const pills=[clfDeadline?`<span class="r-pill"><i class="ti ti-clock" style="font-size:10px"></i>${clfDeadline}</span>`:'', ...clfResources.map(r=>`<span class="r-pill"><i class="ti ti-paperclip" style="font-size:10px"></i>${r}</span>`), ...clfLinks.map(l=>`<span class="r-pill"><i class="ti ti-link" style="font-size:10px"></i>${l.length>20?l.slice(0,20)+'…':l}</span>`)].filter(Boolean).join('');
+  document.getElementById('clf-prog').style.width='100%';
+  document.getElementById('clf-prog-lbl').textContent='Resultado';
+  document.getElementById('clf-body').innerHTML=`<div class="result-card" style="background:${def.bg}"><div class="result-name" style="color:${def.color}"><i class="${def.icon}"></i> ${def.label}</div><div class="result-desc" style="color:${def.color}">${def.desc}</div></div>
+  <div class="result-why"><strong>Por qué este cuadrante</strong>${whyParts.join(' · ')}</div>
+  ${pills?`<div class="result-pills">${pills}</div>`:''}
+  <div class="ai-sug-box"><div class="ai-sug-title"><i class="ti ti-sparkles"></i> Sugerencias de ejecución</div><div class="ai-loading" id="clf-sug-loading"><i class="ti ti-refresh spinning"></i> Analizando con IA...</div><div id="clf-sug-content" style="display:none"></div></div>
+  <div style="display:flex;gap:8px"><button class="btn btn-primary" onclick="confirmAdd('${q}')"><i class="ti ti-check"></i> Agregar en ${def.label}</button><button class="btn" onclick="closeClassifier()"><i class="ti ti-x"></i> Cancelar</button></div>`;
+  const sug=await fetchSuggestions(task,work,q,clfDeadline,clfResources,clfLinks);
+  const ld=document.getElementById('clf-sug-loading'),sc=document.getElementById('clf-sug-content');
+  if(ld)ld.style.display='none';if(sc){sc.style.display='block';sc.innerHTML=renderSuggestions(sug);}
+  window._pendingSug=sug;
+}
+
+async function fetchSuggestions(task,work,q,deadline,resources,links){
+  try{
+    const ctx=[`Trabajo: ${work}`,`Cuadrante: ${QDEFS[q].label}`,deadline?`Deadline: ${deadline}`:'',resources.length?`Recursos: ${resources.join(', ')}`:'',links.length?`Links: ${links.join(', ')}`:''].filter(Boolean).join('\n');
+    const resp=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:900,system:`Sos un asistente de productividad. Analizá la tarea y devolvé SOLO JSON sin backticks:\n{"tipo":"correo|reporte|decision|llamada|documento|revision|otro","pasos":["paso 1","paso 2","paso 3"],"borrador":"borrador corto si aplica (máx 4 líneas, vacío si no aplica)","preguntas":["pregunta clave 1","pregunta 2"],"tiempo_estimado":"X min/horas","consejo":"consejo corto y específico"}`,messages:[{role:'user',content:`Tarea: "${task}"\n${ctx}`}]})});
+    const data=await resp.json();if(data.error)throw new Error();
+    const tb=data.content&&data.content.find(b=>b.type==='text');if(!tb)throw new Error();
+    return JSON.parse(tb.text.replace(/```json|```/g,'').trim());
+  }catch(e){return{tipo:'otro',pasos:['Revisá el contexto completo','Identificá el entregable concreto','Ejecutá y marcá como hecho'],borrador:'',preguntas:['¿Tenés toda la información?','¿Alguien debe revisar esto?'],tiempo_estimado:'variable',consejo:'Empezá con el paso más pequeño para romper la inercia.'};}
+}
+
+function renderSuggestions(sug){
+  if(!sug)return '';let h='';
+  if(sug.tiempo_estimado)h+=`<div style="font-size:11.5px;color:#6B6560;margin-bottom:9px;display:flex;align-items:center;gap:5px"><i class="ti ti-clock" style="font-size:13px"></i> Tiempo estimado: <strong>${sug.tiempo_estimado}</strong></div>`;
+  if(sug.pasos&&sug.pasos.length)h+=`<div class="sug-section"><div class="sug-section-title"><i class="ti ti-list-check"></i> Pasos concretos</div><div class="sug-content">${sug.pasos.map((p,i)=>`${i+1}. ${p}`).join('\n')}</div></div>`;
+  if(sug.preguntas&&sug.preguntas.length)h+=`<div class="sug-section"><div class="sug-section-title"><i class="ti ti-help-circle"></i> Antes de empezar</div><div class="sug-content">${sug.preguntas.map(p=>`• ${p}`).join('\n')}</div></div>`;
+  if(sug.borrador)h+=`<div class="sug-section"><div class="sug-section-title"><i class="ti ti-file-text"></i> Borrador / estructura</div><div class="sug-content">${sug.borrador}</div></div>`;
+  if(sug.consejo)h+=`<div style="margin-top:8px;padding:9px 12px;border-radius:8px;background:#fff;border-left:3px solid #3A6BC4;font-size:12px;color:#1A3872;line-height:1.5"><i class="ti ti-bulb" style="font-size:13px"></i> ${sug.consejo}</div>`;
+  return h;
+}
+
+async function confirmAdd(q){
+  const text=document.getElementById('new-task').value.trim();
+  const work=document.getElementById('new-work').value;
+  if(!text)return;
+  const id=nextId++;
+  const item={id,text,work,q,deadline:clfDeadline,resources:[...clfResources],links:[...clfLinks],suggestions:window._pendingSug||null,project:null,done:false};
+  items.push(item);document.getElementById('new-task').value='';window._pendingSug=null;
+  closeClassifier();render();
+  const res=await sheetsPost({action:'add_task',...item});
+  toast(res.ok?'Agregada al Sheet':'Error al guardar en Sheet',res.ok?'ok':'err');
+}
+
+function openProject(){const name=document.getElementById('new-proj-name').value.trim();if(!name){document.getElementById('new-proj-name').focus();return;}projStep=1;projData={name,work:document.getElementById('new-proj-work').value};projBreakdown=null;projSelected=[];document.getElementById('proj-modal-name').textContent=name.length>28?name.slice(0,28)+'…':name;document.getElementById('proj-overlay').classList.add('open');renderProjStep();}
+function closeProject(){document.getElementById('proj-overlay').classList.remove('open');}
+
+function renderProjStep(){
+  document.getElementById('proj-prog').style.width=(projStep/3*100)+'%';
+  document.getElementById('proj-prog-lbl').textContent=`Paso ${projStep} de 3`;
+  let html='';
+  if(projStep===1){html=`<div class="q-lbl">Contame más sobre el proyecto</div><div class="q-sub">Mientras más contexto des, mejor la descomposición.</div>
+  <div class="proj-field"><span class="proj-label">¿Cuál es el objetivo final?</span><textarea class="proj-textarea" id="proj-goal" placeholder="Ej: Lanzar campaña de marketing con materiales listos y aprobados..."></textarea></div>
+  <div class="proj-field"><span class="proj-label">¿Cuándo vence el proyecto?</span><input type="date" class="proj-input" id="proj-deadline"/></div>
+  <div class="proj-field"><span class="proj-label">¿Restricciones o contexto?</span><textarea class="proj-textarea" id="proj-context" placeholder="Ej: Solo martes y jueves, dependo de aprobación del cliente..." style="min-height:60px"></textarea></div>
+  <div class="step-actions"><button class="btn btn-project" onclick="projNext1()"><i class="ti ti-sparkles"></i> Descomponer con IA</button><button class="btn" onclick="closeProject()"><i class="ti ti-x"></i> Cancelar</button></div>`;}
+  if(projStep===2){html=`<div class="q-lbl">Tareas sugeridas</div><div class="q-sub">Seleccioná cuáles agregar al planner y al Gantt en Sheets.</div>
+  <div class="breakdown-header"><strong>${projData.name}</strong><span><i class="ti ti-calendar" style="font-size:11px"></i> ${projData.deadlineLabel||'Sin fecha'} · ${projData.work}</span></div>
+  <div class="ai-loading" id="proj-loading"><i class="ti ti-refresh spinning"></i> Descomponiendo con IA...</div>
+  <div id="proj-tasks-list"></div>
+  <div class="step-actions" id="proj-step2-actions" style="display:none"><button class="btn btn-project" onclick="projNext2()"><i class="ti ti-check"></i> Agregar al planner y Sheets</button><button class="btn" onclick="closeProject()">Cancelar</button></div>`
+  ;setTimeout(fetchBreakdown,50);}
+  if(projStep===3){html=`<div style="text-align:center;padding:1.5rem 0">
+  <div style="font-size:32px;margin-bottom:12px;color:#2E8B57"><i class="ti ti-circle-check"></i></div>
+  <div style="font-family:'DM Serif Display',serif;font-size:1.3rem;font-weight:400;margin-bottom:6px">¡Proyecto agregado!</div>
+  <div style="font-size:13px;color:#6B6560;margin-bottom:6px">${projSelected.length} tareas en el planner y Google Sheets.</div>
+  <div style="font-size:12px;color:#2E8B57;margin-bottom:20px;display:flex;align-items:center;justify-content:center;gap:5px"><i class="ti ti-table"></i> El Gantt se actualizó automáticamente.</div>
+  <button class="btn btn-primary" onclick="closeProject();document.getElementById('new-proj-name').value=''"><i class="ti ti-check"></i> Listo</button></div>`;}
+  document.getElementById('proj-body').innerHTML=html;
+}
+
+function projNext1(){const goal=document.getElementById('proj-goal').value.trim();if(!goal){document.getElementById('proj-goal').focus();return;}const dl=document.getElementById('proj-deadline').value;projData.goal=goal;projData.context=document.getElementById('proj-context').value.trim();if(dl){const d=new Date(dl+'T00:00:00');projData.deadline=dl;projData.deadlineLabel=d.toLocaleDateString('es-CO',{day:'numeric',month:'short',year:'numeric'});}projStep=2;renderProjStep();}
+
+async function fetchBreakdown(){
+  try{
+    const today=new Date();
+    const resp=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1500,system:`Sos un experto en gestión de proyectos. Descomponé el objetivo en tareas concretas.\nDevolvé SOLO JSON sin backticks:\n{"tareas":[{"texto":"nombre concreto de la tarea","cuadrante":"q1|q2|q3|q4","deadline":"fecha sugerida dd MMM","razon":"por qué este cuadrante y fecha"}]}\nReglas: máximo 8 tareas, mínimo 4. Distribuí fechas lógicamente entre hoy y el deadline. Cada tarea debe ser accionable (verbo+objeto).`,messages:[{role:'user',content:`Proyecto: "${projData.name}"\nObjetivo: ${projData.goal}\nDeadline: ${projData.deadlineLabel||'sin fecha'}\nHoy: ${today.toLocaleDateString('es-CO',{day:'numeric',month:'short',year:'numeric'})}\nContexto: ${projData.context||'ninguno'}\nTrabajo: ${projData.work}`}]})});
+    const data=await resp.json();if(data.error)throw new Error();
+    const tb=data.content&&data.content.find(b=>b.type==='text');if(!tb)throw new Error();
+    projBreakdown=JSON.parse(tb.text.replace(/```json|```/g,'').trim());
+    projSelected=projBreakdown.tareas.map((_,i)=>i);renderProjTaskList();
+  }catch(e){
+    projBreakdown={tareas:[{texto:'Definir alcance y entregables',cuadrante:'q2',deadline:'esta semana',razon:'Primer paso antes de ejecutar'},{texto:'Identificar recursos y dependencias',cuadrante:'q2',deadline:'esta semana',razon:'Necesario para planear'},{texto:'Ejecutar entregable principal',cuadrante:'q2',deadline:'próxima semana',razon:'Core del proyecto'},{texto:'Revisión y cierre',cuadrante:'q1',deadline:'antes del deadline',razon:'Cierre del proyecto'}]};
+    projSelected=[0,1,2,3];renderProjTaskList();
+  }
+}
+
+function renderProjTaskList(){
+  const ld=document.getElementById('proj-loading');if(ld)ld.style.display='none';
+  const list=document.getElementById('proj-tasks-list');
+  const actions=document.getElementById('proj-step2-actions');
+  if(actions)actions.style.display='flex';if(!list)return;
+  list.innerHTML=projBreakdown.tareas.map((t,i)=>{const def=QDEFS[t.cuadrante];return `<div class="proj-task-item"><div class="proj-task-num" style="background:${QCOLORS[t.cuadrante]}">${i+1}</div><div class="proj-task-body"><div class="proj-task-text">${t.texto}</div><div class="proj-task-meta"><span class="proj-task-badge" style="background:${def.bg};color:${def.color}"><i class="${def.icon}" style="font-size:9px"></i> ${def.label}</span><span class="proj-task-badge" style="background:#FDF8EE;color:#7A5210"><i class="ti ti-clock" style="font-size:9px"></i> ${t.deadline}</span></div><div style="font-size:11px;color:#A09A94;margin-top:3px;line-height:1.3">${t.razon}</div></div><div class="proj-task-check"><input type="checkbox" id="ptask-${i}" ${projSelected.includes(i)?'checked':''} onchange="toggleProjTask(${i})"/><label for="ptask-${i}">Agregar</label></div></div>`;}).join('');
+}
+
+function toggleProjTask(i){const idx=projSelected.indexOf(i);if(idx>-1)projSelected.splice(idx,1);else projSelected.push(i);}
+
+async function projNext2(){
+  const projId='proj_'+Date.now();
+  const selectedTareas=projSelected.map(i=>projBreakdown.tareas[i]);
+  selectedTareas.forEach(t=>{items.push({id:nextId++,text:t.texto,work:projData.work,q:t.cuadrante,deadline:t.deadline,resources:[],links:[],suggestions:null,project:projData.name,done:false});});
+  projStep=3;renderProjStep();render();
+  toast('Enviando proyecto a Sheets...','info');
+  const res=await sheetsPost({action:'add_project',projectId:projId,projectName:projData.name,work:projData.work,tareas:selectedTareas});
+  toast(res.ok?`Gantt actualizado (${res.added} tareas)`:'Error al guardar en Sheets',res.ok?'ok':'err');
+}
+
+function openDetail(id){
+  detailId=id;const it=items.find(i=>i.id===id);if(!it)return;
+  const def=QDEFS[it.q];
+  let html=`<div class="detail-section"><div style="font-size:14px;font-weight:500;color:#1A1714;margin-bottom:8px">${it.text}</div>
+  <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">
+    <span class="badge ${it.work==='Sombra'?'b-s':'b-r'}" style="font-size:11.5px">${it.work}</span>
+    <span class="q-badge" style="background:${def.bg};color:${def.color}"><i class="${def.icon}" style="font-size:12px"></i> ${def.label}</span>
+    ${it.deadline?`<span class="badge b-dl"><i class="ti ti-clock" style="font-size:9px"></i> ${it.deadline}</span>`:''}
+    ${it.project?`<span class="badge b-proj"><i class="ti ti-layout-grid" style="font-size:9px"></i> ${it.project}</span>`:''}
+  </div></div>`;
+  if(it.resources&&it.resources.length)html+=`<div class="detail-section"><div class="detail-section-title"><i class="ti ti-paperclip"></i> Recursos</div><div class="tags">${it.resources.map(r=>`<span class="tag tag-res">${r}</span>`).join('')}</div></div>`;
+  html+=`<div class="detail-section"><div class="detail-section-title"><i class="ti ti-link"></i> Links y adjuntos</div>
+  <div id="det-links">${renderDetLinks(it)}</div>
+  <div class="add-link-row"><input type="text" id="det-link-inp" placeholder="https://... o nombre del doc" onkeydown="if(event.key==='Enter')detAddLink()"/><button class="btn btn-sm" onclick="detAddLink()"><i class="ti ti-plus"></i> Agregar</button></div></div>`;
+  html+=`<div class="detail-section"><div class="detail-section-title"><i class="ti ti-sparkles"></i> Sugerencias de ejecución<button class="sug-reload" onclick="detReloadSug()"><i class="ti ti-refresh" style="font-size:12px"></i> Regenerar</button></div>
+  <div id="det-sug">${it.suggestions?renderSuggestions(it.suggestions):'<div style="font-size:12.5px;color:#A09A94;font-style:italic">Sin sugerencias. Hacé clic en Regenerar.</div>'}</div></div>`;
+  html+=`<div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn btn-primary" onclick="toggle(${id});closeDetail()"><i class="ti ti-check"></i> ${it.done?'Reabrir':'Marcar como hecha'}</button><button class="btn" style="color:#C4523A;border-color:rgba(196,82,58,.3)" onclick="del(${id})"><i class="ti ti-trash"></i> Eliminar</button></div>`;
+  document.getElementById('det-body').innerHTML=html;
+  document.getElementById('det-overlay').classList.add('open');
+}
+
+function renderDetLinks(it){
+  if(!it.links||!it.links.length)return '<div style="font-size:12px;color:#A09A94;font-style:italic;margin-bottom:6px">Sin links todavía.</div>';
+  return it.links.map((l,i)=>{const isUrl=l.startsWith('http');return `<div class="link-item"><i class="ti ti-${isUrl?'external-link':'file'}" style="font-size:14px;color:#3A6BC4;flex-shrink:0"></i>${isUrl?`<a href="${l}" target="_blank" rel="noopener">${l}</a>`:`<span style="flex:1;font-size:12.5px">${l}</span>`}<button onclick="detRemLink(${i})"><i class="ti ti-x"></i></button></div>`;}).join('');
+}
+function detAddLink(){const inp=document.getElementById('det-link-inp');if(!inp||!inp.value.trim())return;const it=items.find(i=>i.id===detailId);if(!it)return;if(!it.links)it.links=[];it.links.push(inp.value.trim());inp.value='';document.getElementById('det-links').innerHTML=renderDetLinks(it);render();}
+function detRemLink(i){const it=items.find(i2=>i2.id===detailId);if(!it||!it.links)return;it.links.splice(i,1);document.getElementById('det-links').innerHTML=renderDetLinks(it);render();}
+async function detReloadSug(){const it=items.find(i=>i.id===detailId);if(!it)return;document.getElementById('det-sug').innerHTML='<div class="ai-loading"><i class="ti ti-refresh spinning"></i> Generando sugerencias...</div>';const sug=await fetchSuggestions(it.text,it.work,it.q,it.deadline,it.resources||[],it.links||[]);it.suggestions=sug;document.getElementById('det-sug').innerHTML=renderSuggestions(sug);}
+function closeDetail(){document.getElementById('det-overlay').classList.remove('open');detailId=null;}
+
+document.getElementById('btn-classify').addEventListener('click',openClassifier);
+document.getElementById('btn-open-project').addEventListener('click',openProject);
+document.getElementById('btn-add-manual').addEventListener('click',async()=>{const text=document.getElementById('new-task').value.trim();const work=document.getElementById('new-work').value;if(!text)return;const id=nextId++;const q=document.getElementById('manual-q').value;const item={id,text,work,q,deadline:'',resources:[],links:[],suggestions:null,project:null,done:false};items.push(item);document.getElementById('new-task').value='';render();const res=await sheetsPost({action:'add_task',...item});toast(res.ok?'Agregada al Sheet':'Error al guardar',res.ok?'ok':'err');});
+document.getElementById('new-task').addEventListener('keydown',e=>{if(e.key==='Enter')openClassifier();});
+document.getElementById('clf-overlay').addEventListener('click',e=>{if(e.target===document.getElementById('clf-overlay'))closeClassifier();});
+document.getElementById('proj-overlay').addEventListener('click',e=>{if(e.target===document.getElementById('proj-overlay'))closeProject();});
+document.getElementById('det-overlay').addEventListener('click',e=>{if(e.target===document.getElementById('det-overlay'))closeDetail();});
+
+(async()=>{
+  try{
+    // 1. Ping
+    setSheetsStatus('Cargando tareas desde Google Sheets...');
+    const ping=await fetch(SHEETS_URL+'?action=ping');
+    const pingData=await ping.json();
+    if(!pingData.ok) throw new Error('ping failed');
+    setSheetsDot('ok');
+    setSheetsStatus('Google Sheets conectado — cargando tareas...');
+
+    // 2. Load tasks from Sheet
+    const resp=await fetch(SHEETS_URL+'?action=get_tasks');
+    const data=await resp.json();
+    if(data.ok && data.tasks && data.tasks.length>0){
+      items=[];
+      data.tasks.forEach((row,idx)=>{
+        // row: [ID, Proyecto, Tarea, Trabajo, Cuadrante, Deadline, Estado, FechaCreacion, Recursos, Links]
+        const id=parseInt(row[0])||nextId++;
+        const project=row[1]==='—'?null:row[1];
+        const text=row[2];
+        const work=row[3];
+        const qLabel=String(row[4]);
+        let q='q2';
+        if(qLabel.startsWith('Q1'))q='q1';
+        else if(qLabel.startsWith('Q2'))q='q2';
+        else if(qLabel.startsWith('Q3'))q='q3';
+        else if(qLabel.startsWith('Q4'))q='q4';
+        const deadline=row[5]||'';
+        const done=String(row[6])==='Completada';
+        const resources=row[8]?row[8].split(', ').filter(Boolean):[];
+        const links=row[9]?row[9].split(', ').filter(Boolean):[];
+        if(id>=nextId)nextId=id+1;
+        items.push({id,text,work,q,deadline,resources,links,suggestions:null,project,done});
+      });
+      setSheetsStatus('Google Sheets conectado — '+items.length+' tareas cargadas');
+      toast(items.length+' tareas cargadas desde Google Sheets','ok');
+    } else {
+      setSheetsStatus('Google Sheets conectado — sincronización automática activa');
+    }
+  }catch(e){
+    setSheetsDot('err');
+    setSheetsStatus('Sin conexión con Google Sheets — trabajando offline');
+  }
+  render();
+})();
+</script>
+</body>
+</html>
